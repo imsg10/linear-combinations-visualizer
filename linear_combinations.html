@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Combinations – Visual Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #faf7f2;
+    --ink: #1a1510;
+    --muted: #7a6e62;
+    --v-color: #c0392b;
+    --w-color: #2563a8;
+    --comb-color: #16a34a;
+    --accent: #e8620a;
+    --panel: #f0ebe2;
+    --border: #d4c9b8;
+  }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+
+  .layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Canvas card */
+  .canvas-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 3px 3px 0 var(--border);
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+  }
+
+  /* Controls */
+  .controls {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    box-shadow: 3px 3px 0 var(--border);
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+  }
+
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  .slider-group label span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .slider-c input[type=range] { background: var(--v-color); }
+  .slider-d input[type=range] { background: var(--w-color); }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 0.88rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 28px; height: 3px;
+    border-radius: 2px;
+  }
+
+  /* Info box */
+  .info-box {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  .info-box .math {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    display: block;
+  }
+
+  .result-vec {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    color: var(--comb-color);
+    font-weight: 600;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-family: 'EB Garamond', serif;
+    font-size: 0.9rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .insight {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Span sweep button */
+  .btn {
+    display: inline-block;
+    padding: 7px 16px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 3px;
+    font-family: 'EB Garamond', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.8; }
+  .btn.active-btn { background: var(--accent); }
+
+  .section-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div>
+    <h1>Linear Combinations</h1>
+    <p class="subtitle">Drag the sliders — watch the vectors move</p>
+  </div>
+
+  <div class="canvas-card">
+    <canvas id="cvs" width="640" height="480"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--v-color)"></div> <strong>v</strong> = [1, 1]</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--w-color)"></div> <strong>w</strong> = [2, 3]</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--comb-color)"></div> <strong>cv + dw</strong> (result)</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <p class="section-title">Adjust the scalars</p>
+    <div class="controls-grid">
+      <div class="slider-group slider-c">
+        <label>scalar <em>c</em> <span id="c-val">1.0</span></label>
+        <input type="range" id="slider-c" min="-3" max="3" step="0.1" value="1">
+      </div>
+      <div class="slider-group slider-d">
+        <label>scalar <em>d</em> <span id="d-val">1.0</span></label>
+        <input type="range" id="slider-d" min="-3" max="3" step="0.1" value="1">
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="tabs">
+      <button class="tab active" data-tab="result">Result</button>
+      <button class="tab" data-tab="intuition">Intuition</button>
+      <button class="tab" data-tab="span">Span</button>
+    </div>
+
+    <div class="tab-content active" id="tab-result">
+      <p>The current linear combination:</p>
+      <code class="math" id="combo-display">c·v + d·w = 1·[1,1] + 1·[2,3] = [3, 4]</code>
+      <p>Result vector: <span class="result-vec" id="result-display">[3, 4]</span></p>
+    </div>
+
+    <div class="tab-content" id="tab-intuition">
+      <p>Think of <strong style="color:var(--v-color)">v</strong> and <strong style="color:var(--w-color)">w</strong> as two arrows. The scalar <em>c</em> stretches or shrinks <strong style="color:var(--v-color)">v</strong>, and <em>d</em> stretches or shrinks <strong style="color:var(--w-color)">w</strong>. Then you place them tip-to-tail.</p>
+      <div class="insight">
+        Notice the dashed gray arrow: that's <em>c</em><strong>v</strong> placed at the tip of <em>d</em><strong>w</strong>. The green arrow is where you land — the combination.
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-span">
+      <p>As <em>c</em> and <em>d</em> range over <em>all</em> real numbers, what set of points does <strong>cv + dw</strong> reach?</p>
+      <div class="insight" id="span-insight">
+        Since <strong>v</strong> and <strong>w</strong> don't point in the same direction, they <em>span</em> the entire 2D plane — every point can be reached with the right c and d.
+      </div>
+      <button class="btn" id="sweep-btn">Show span sweep</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('cvs');
+const ctx = canvas.getContext('2d');
+
+// Vector definitions
+const V = [1, 1];
+const W = [2, 3];
+
+let c = 1, d = 1;
+let sweeping = false;
+let sweepFrame = null;
+let sweepDots = [];
+
+// Canvas sizing
+const CW = 640, CH = 480;
+const OX = CW / 2, OY = CH / 2;
+const SCALE = 60;
+
+function toCanvas(x, y) {
+  return [OX + x * SCALE, OY - y * SCALE];
+}
+
+function drawArrow(x1, y1, x2, y2, color, width = 2.5, alpha = 1) {
+  const [cx1, cy1] = toCanvas(x1, y1);
+  const [cx2, cy2] = toCanvas(x2, y2);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+
+  const dx = cx2 - cx1, dy = cy2 - cy1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 1) { ctx.restore(); return; }
+
+  const ux = dx / len, uy = dy / len;
+  const hw = 9, hl = 14;
+
+  ctx.beginPath();
+  ctx.moveTo(cx1, cy1);
+  ctx.lineTo(cx2 - ux * hl, cy2 - uy * hl);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx2, cy2);
+  ctx.lineTo(cx2 - ux * hl - uy * hw, cy2 - uy * hl + ux * hw);
+  ctx.lineTo(cx2 - ux * hl + uy * hw, cy2 - uy * hl - ux * hw);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDashedLine(x1, y1, x2, y2, color) {
+  const [cx1, cy1] = toCanvas(x1, y1);
+  const [cx2, cy2] = toCanvas(x2, y2);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx1, cy1);
+  ctx.lineTo(cx2, cy2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function labelVec(x, y, text, color, offsetX = 10, offsetY = -10) {
+  const [cx, cy] = toCanvas(x, y);
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = 'italic 600 15px EB Garamond, Georgia, serif';
+  ctx.fillText(text, cx + offsetX, cy + offsetY);
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, CW, CH);
+
+  // Background
+  ctx.fillStyle = '#fdfcfa';
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Sweep dots
+  if (sweepDots.length > 0) {
+    sweepDots.forEach(([x, y]) => {
+      const [cx, cy] = toCanvas(x, y);
+      ctx.save();
+      ctx.fillStyle = '#16a34a';
+      ctx.globalAlpha = 0.12;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  // Grid
+  ctx.save();
+  ctx.strokeStyle = '#e0d9cf';
+  ctx.lineWidth = 1;
+  for (let i = -5; i <= 5; i++) {
+    const [x1] = toCanvas(i, -5), [, y1] = toCanvas(-5, i);
+    const [x2] = toCanvas(i, 5),  [, y2] = toCanvas(5, i);
+    const [ax] = toCanvas(-5, 0), [, ay] = toCanvas(0, -5);
+    const [bx] = toCanvas(5, 0),  [, by] = toCanvas(0, 5);
+    ctx.beginPath(); ctx.moveTo(x1, toCanvas(i, -5)[1]); ctx.lineTo(x2, toCanvas(i, 5)[1]); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(toCanvas(-5, i)[0], y1); ctx.lineTo(toCanvas(5, i)[0], y2); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Axes
+  ctx.save();
+  ctx.strokeStyle = '#b0a898';
+  ctx.lineWidth = 1.5;
+  const [ox, oy] = toCanvas(0, 0);
+  ctx.beginPath(); ctx.moveTo(toCanvas(-5.5,0)[0], oy); ctx.lineTo(toCanvas(5.5,0)[0], oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, toCanvas(0,5.5)[1]); ctx.lineTo(ox, toCanvas(0,-5.5)[1]); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#b0a898';
+  ctx.font = '13px JetBrains Mono, monospace';
+  for (let i = -5; i <= 5; i++) {
+    if (i === 0) continue;
+    const [lx, ly] = toCanvas(i, 0);
+    ctx.fillText(i, lx - 5, oy + 16);
+  }
+  ctx.restore();
+
+  // --- Vectors ---
+  const cv = [c * V[0], c * V[1]];
+  const dw = [d * W[0], d * W[1]];
+  const result = [cv[0] + dw[0], cv[1] + dw[1]];
+
+  // dashed parallelogram helpers
+  drawDashedLine(cv[0], cv[1], result[0], result[1], '#2563a8');
+  drawDashedLine(dw[0], dw[1], result[0], result[1], '#c0392b');
+
+  // cv arrow (red)
+  drawArrow(0, 0, cv[0], cv[1], '#c0392b', 3);
+  // dw arrow (blue)
+  drawArrow(0, 0, dw[0], dw[1], '#2563a8', 3);
+
+  // Tip-to-tail: cv starting from tip of dw
+  drawDashedLine(dw[0], dw[1], result[0], result[1], '#555');
+
+  // Result arrow (green)
+  drawArrow(0, 0, result[0], result[1], '#16a34a', 3.5);
+
+  // Labels
+  labelVec(cv[0] / 2, cv[1] / 2, `cv`, '#c0392b', -28, 4);
+  labelVec(dw[0] / 2, dw[1] / 2, `dw`, '#2563a8', 8, -6);
+  labelVec(result[0], result[1], `cv+dw`, '#16a34a', 8, -8);
+
+  // Origin dot
+  ctx.save();
+  ctx.fillStyle = '#1a1510';
+  ctx.beginPath(); ctx.arc(ox, oy, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function updateInfo() {
+  const cv = [c * V[0], c * V[1]];
+  const dw = [d * W[0], d * W[1]];
+  const rx = Math.round((cv[0] + dw[0]) * 10) / 10;
+  const ry = Math.round((cv[1] + dw[1]) * 10) / 10;
+  document.getElementById('combo-display').textContent =
+    `c·v + d·w = ${c.toFixed(1)}·[1,1] + ${d.toFixed(1)}·[2,3] = [${rx}, ${ry}]`;
+  document.getElementById('result-display').textContent = `[${rx}, ${ry}]`;
+}
+
+// Sliders
+document.getElementById('slider-c').addEventListener('input', e => {
+  c = parseFloat(e.target.value);
+  document.getElementById('c-val').textContent = c.toFixed(1);
+  draw(); updateInfo();
+});
+
+document.getElementById('slider-d').addEventListener('input', e => {
+  d = parseFloat(e.target.value);
+  document.getElementById('d-val').textContent = d.toFixed(1);
+  draw(); updateInfo();
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// Span sweep
+let sweepInterval = null;
+document.getElementById('sweep-btn').addEventListener('click', () => {
+  const btn = document.getElementById('sweep-btn');
+  if (sweepInterval) {
+    clearInterval(sweepInterval);
+    sweepInterval = null;
+    sweepDots = [];
+    btn.textContent = 'Show span sweep';
+    btn.classList.remove('active-btn');
+    draw(); return;
+  }
+  btn.textContent = 'Clear sweep';
+  btn.classList.add('active-btn');
+  sweepDots = [];
+  let t = 0;
+  sweepInterval = setInterval(() => {
+    for (let i = 0; i < 15; i++) {
+      const rc = (Math.random() - 0.5) * 8;
+      const rd = (Math.random() - 0.5) * 8;
+      const x = rc * V[0] + rd * W[0];
+      const y = rc * V[1] + rd * W[1];
+      sweepDots.push([x, y]);
+    }
+    draw();
+    t++;
+    if (t > 80) { clearInterval(sweepInterval); sweepInterval = null; }
+  }, 50);
+});
+
+draw();
+updateInfo();
+</script>
+</body>
+</html>
